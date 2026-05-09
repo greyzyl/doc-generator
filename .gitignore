@@ -1,0 +1,28 @@
+# Local secrets
+.env
+**/.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Backend runtime data
+backend/.api_storage/
+backend/output/
+
+# Frontend dependencies and build output
+official-doc-frontend/node_modules/
+official-doc-frontend/dist/
+official-doc-frontend/tsconfig.tsbuildinfo
+official-doc-frontend/.vite/
+
+# Logs and local editor files
+.dev-logs/
+.codex
+**/.codex
+~$*
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,11 @@
+{
+  "fixedFields": {
+    "issuingUnit": "中铁二十四局集团有限公司\n中铁二十五局集团有限公司",
+    "docNumber": "中铁二十四局〔2026〕12号",
+    "signer": "张三",
+    "copyTo": "中国铁道建筑集团有限公司办公厅",
+    "printingUnit": "中铁二十四局集团有限公司办公室",
+    "printingDate": "2026年4月30日"
+  },
+  "bodyDocx": "files/test4.docx"
+}
