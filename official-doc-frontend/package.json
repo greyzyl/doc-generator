@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --configLoader native",
+    "dev:official": "VITE_DEV_PORT=62233 VITE_PROXY_TARGET=http://127.0.0.1:8009 vite --configLoader native",
+    "dev:test": "VITE_DEV_PORT=63230 VITE_PROXY_TARGET=http://127.0.0.1:8010 vite --configLoader native",
     "build": "tsc -b && vite build --configLoader native",
     "preview": "vite preview"
   },

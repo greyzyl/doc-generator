@@ -22,7 +22,14 @@ npm run dev
 默认访问：
 
 ```text
-http://localhost:5173
+http://localhost:62233
+```
+
+也可以显式启动正式版或测试版：
+
+```bash
+npm run dev:official  # 前端 62233，代理后端 8009
+npm run dev:test      # 前端 63230，代理后端 8010
 ```
 
 ## 2. 配置后端接口地址
@@ -37,12 +44,14 @@ cp .env.example .env
 
 ```env
 VITE_API_BASE_URL=/api/v1
+VITE_DEV_PORT=62233
+VITE_PROXY_TARGET=http://127.0.0.1:8009
 ```
 
-开发环境默认通过 Vite 把 `/api` 代理到 `http://127.0.0.1:8000`。如果后端已配置 CORS，也可以直接指向后端，例如：
+开发环境默认通过 Vite 把 `/api` 代理到 `http://127.0.0.1:8009`。如果后端已配置 CORS，也可以直接指向后端，例如：
 
 ```env
-VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1
+VITE_API_BASE_URL=http://127.0.0.1:8009/api/v1
 ```
 
 ## 3. 核心数据流
