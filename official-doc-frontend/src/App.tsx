@@ -163,7 +163,7 @@ export default function App() {
       setParseId('');
       setCharUnitsState([]);
       setDirty(false);
-      setMessage('文件上传成功。下一步可以选择规则解析或 LLM 解析。');
+      setMessage('文件上传成功。下一步可以选择规则解析或大模型解析。');
     } catch (error) {
       setMessage(`上传文件失败：${(error as Error).message}`);
     } finally {
@@ -202,7 +202,7 @@ export default function App() {
     }
 
     setParsingWithLLM(true);
-    setMessage('正在使用 LLM 解析正文段落……');
+    setMessage('正在使用大模型解析正文段落……');
 
     try {
       let streamedParagraphs: ParagraphBlock[] = [];
@@ -216,14 +216,14 @@ export default function App() {
           setCharUnitsState([]);
           setDirty(false);
           clearBrowserSelection();
-          setMessage('LLM 正在返回段落……');
+          setMessage('大模型正在返回段落……');
         },
         onParagraph: (paragraph, count) => {
           streamedParagraphs = [...streamedParagraphs, paragraph].sort((left, right) => {
             return (left.index || 0) - (right.index || 0);
           });
           setCharUnitsState(paragraphsToCharUnits(streamedParagraphs));
-          setMessage(`LLM 已返回 ${count || streamedParagraphs.length} 个段落，正在继续解析……`);
+          setMessage(`大模型已返回 ${count || streamedParagraphs.length} 个段落，正在继续解析……`);
         },
       });
       const nextParagraphs = result.paragraphs || streamedParagraphs;
@@ -231,9 +231,9 @@ export default function App() {
       setCharUnitsState(paragraphsToCharUnits(nextParagraphs));
       setDirty(false);
       clearBrowserSelection();
-      setMessage(`LLM 解析完成，返回 ${nextParagraphs.length} 个段落。`);
+      setMessage(`大模型解析完成，返回 ${nextParagraphs.length} 个段落。`);
     } catch (error) {
-      setMessage(`LLM 解析失败：${(error as Error).message}`);
+      setMessage(`大模型解析失败：${(error as Error).message}`);
     } finally {
       setParsingWithLLM(false);
     }
@@ -299,7 +299,7 @@ export default function App() {
       <header className="app-header">
         <div>
           <h1>标准格式公文生成前端</h1>
-          <p>模板选择 → 上传正文 → 规则/LLM 解析 → 字符级标注 → 同步类型 → 生成下载。</p>
+          <p>模板选择 → 上传正文 → 规则/大模型解析 → 字符级标注 → 同步类型 → 生成下载。</p>
         </div>
         <div className="step-row">
           <StepBadge done={templates.length > 0} active={templatesLoading}>1 模板</StepBadge>
@@ -361,7 +361,7 @@ export default function App() {
           message={message}
           setMessage={setMessage}
           isParsing={parsing || parsingWithLLM}
-          parseModeLabel={parsingWithLLM ? 'LLM 正在解析正文' : parsing ? '规则正在解析正文' : ''}
+          parseModeLabel={parsingWithLLM ? '大模型正在解析正文' : parsing ? '规则正在解析正文' : ''}
         />
       </div>
     </div>

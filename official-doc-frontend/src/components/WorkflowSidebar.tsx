@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import type { DocumentTemplate, OutputFile } from '../types/document';
 import { MetadataForm } from './MetadataForm';
 import { DownloadList } from './DownloadList';
+
+type ParseStrategy = 'RULE' | 'LLM';
 
 interface WorkflowSidebarProps {
   collapsed: boolean;
@@ -43,6 +46,18 @@ interface WorkflowSidebarProps {
 }
 
 export function WorkflowSidebar(props: WorkflowSidebarProps) {
+  const [parseStrategy, setParseStrategy] = useState<ParseStrategy>('RULE');
+  const isParsing = props.parsing || props.parsingWithLLM;
+  const canSelectedParse = parseStrategy === 'RULE' ? props.canParse : props.canParseWithLLM;
+
+  function handleParse() {
+    if (parseStrategy === 'RULE') {
+      props.onParseByRule();
+    } else {
+      props.onParseByLLM();
+    }
+  }
+
   const templateSelector = (
     <section className="panel-block quick-block">
       <div className="panel-title-row compact">
@@ -111,12 +126,26 @@ export function WorkflowSidebar(props: WorkflowSidebarProps) {
       <section className="panel-block quick-block">
         <h2>处理选项</h2>
         <div className="action-grid">
-          <button type="button" onClick={props.onParseByRule} disabled={!props.canParse || props.parsing} className="btn blue">
-            {props.parsing ? '解析中' : '规则解析'}
-          </button>
-          <button type="button" onClick={props.onParseByLLM} disabled={!props.canParseWithLLM || props.parsingWithLLM} className="btn purple">
-            {props.parsingWithLLM ? '解析中' : 'LLM 解析'}
-          </button>
+          <div className="parse-action-row">
+            <select
+              value={parseStrategy}
+              onChange={(event) => setParseStrategy(event.target.value as ParseStrategy)}
+              disabled={isParsing}
+              aria-label="选择解析方式"
+              className="input parse-select"
+            >
+              <option value="RULE">规则解析</option>
+              <option value="LLM">大模型解析</option>
+            </select>
+            <button
+              type="button"
+              onClick={handleParse}
+              disabled={!canSelectedParse || isParsing}
+              className={`btn ${parseStrategy === 'LLM' ? 'purple' : 'blue'}`}
+            >
+              {isParsing ? '解析中' : '解析'}
+            </button>
+          </div>
           <button type="button" onClick={props.onSaveParagraphs} disabled={!props.canSave || props.savingParagraphs} className="btn green">
             {props.savingParagraphs ? '同步中' : '同步类型'}
           </button>

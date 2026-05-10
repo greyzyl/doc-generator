@@ -327,7 +327,22 @@ textarea.input {
   gap: 8px;
 }
 
+.parse-action-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) 88px;
+  gap: 8px;
+}
+
+.parse-select {
+  min-width: 0;
+}
+
 .sidebar.is-collapsed .action-grid {
+  grid-template-columns: 1fr;
+}
+
+.sidebar.is-collapsed .parse-action-row {
   grid-template-columns: 1fr;
 }
 
