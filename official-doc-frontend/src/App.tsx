@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ApiClient } from './api/client';
 import { DocumentApi } from './api/documentApi';
 import { CharacterEditor } from './components/CharacterEditor';
@@ -11,6 +11,7 @@ import { clearBrowserSelection } from './utils/selection';
 import './styles.css';
 
 const DEFAULT_TEMPLATE_ID = 'LETTER';
+const AUTO_SYNC_DELAY_MS = 700;
 
 const DEFAULT_METADATA: Record<string, string> = {
   issuingOrg: '中铁二十四局集团有限公司',
@@ -40,6 +41,7 @@ export default function App() {
   const [parseId, setParseId] = useState('');
 
   const [charUnits, setCharUnitsState] = useState<CharUnit[]>([]);
+  const [editRevision, setEditRevision] = useState(0);
   const [dirty, setDirty] = useState(false);
   const [message, setMessage] = useState('先加载模板，填写字段并上传正文文件。也可以直接用示例数据测试字符级标注。');
 
@@ -62,8 +64,32 @@ export default function App() {
   const canSave = Boolean(draftId && parseId && dirty);
   const canGenerate = Boolean(draftId && parseId && mergedParagraphs.length > 0);
 
+  const latestSyncInputRef = useRef({ draftId: '', parseId: '', charUnits: [] as CharUnit[] });
+  const dirtyRef = useRef(false);
+  const editRevisionRef = useRef(0);
+  const syncedRevisionRef = useRef(0);
+  const autoSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const syncInFlightRef = useRef(false);
+
   const setCharUnits = useCallback((updater: (prev: CharUnit[]) => CharUnit[]) => {
+    editRevisionRef.current += 1;
+    setEditRevision(editRevisionRef.current);
+    setDirty(true);
     setCharUnitsState(updater);
+  }, []);
+
+  useEffect(() => {
+    latestSyncInputRef.current = { draftId, parseId, charUnits };
+  }, [draftId, parseId, charUnits]);
+
+  useEffect(() => {
+    dirtyRef.current = dirty;
+  }, [dirty]);
+
+  useEffect(() => {
+    return () => {
+      if (autoSyncTimerRef.current) clearTimeout(autoSyncTimerRef.current);
+    };
   }, []);
 
   function getTypeLabel(type: string) {
@@ -139,6 +165,66 @@ export default function App() {
     clearBrowserSelection();
     setMessage('已载入示例 paragraphs，并转换为字符级结构。');
   }
+
+  const syncParagraphs = useCallback(
+    async (options: { manual?: boolean } = {}) => {
+      if (syncInFlightRef.current) {
+        if (options.manual) setMessage('已有同步正在进行，当前修改会在随后继续同步。');
+        return;
+      }
+
+      const revision = editRevisionRef.current;
+      const { draftId: latestDraftId, parseId: latestParseId, charUnits: latestCharUnits } = latestSyncInputRef.current;
+      if (!dirtyRef.current && !options.manual) return;
+      if (!latestDraftId || !latestParseId || revision <= syncedRevisionRef.current) {
+        if (options.manual) setMessage('当前没有需要同步的修改，或缺少 draftId / parseId。');
+        return;
+      }
+
+      syncInFlightRef.current = true;
+      setSavingParagraphs(true);
+      setMessage(options.manual ? '正在同步段落类型……' : '正在自动同步段落类型……');
+      let didFail = false;
+
+      try {
+        const paragraphs = charUnitsToParagraphs(latestCharUnits);
+        const result = await api.saveParagraphs(latestDraftId, latestParseId, paragraphs);
+
+        if (editRevisionRef.current === revision) {
+          syncedRevisionRef.current = revision;
+          setDirty(false);
+          setMessage(`段落类型已${options.manual ? '' : '自动'}同步，后端更新 ${result.updatedCount ?? 0} 个段落。`);
+        } else {
+          syncedRevisionRef.current = Math.max(syncedRevisionRef.current, revision);
+        }
+      } catch (error) {
+        didFail = true;
+        setDirty(true);
+        setMessage(`同步失败：${(error as Error).message}。可继续编辑，或点击“同步类型”重试。`);
+      } finally {
+        syncInFlightRef.current = false;
+        setSavingParagraphs(false);
+
+        const hasUnsyncedEdit = dirtyRef.current && editRevisionRef.current > syncedRevisionRef.current;
+        if (!didFail && hasUnsyncedEdit) {
+          if (autoSyncTimerRef.current) clearTimeout(autoSyncTimerRef.current);
+          autoSyncTimerRef.current = setTimeout(() => {
+            void syncParagraphs();
+          }, AUTO_SYNC_DELAY_MS);
+        }
+      }
+    },
+    [api],
+  );
+
+  useEffect(() => {
+    if (!dirty || !draftId || !parseId || editRevision <= syncedRevisionRef.current) return;
+
+    if (autoSyncTimerRef.current) clearTimeout(autoSyncTimerRef.current);
+    autoSyncTimerRef.current = setTimeout(() => {
+      void syncParagraphs();
+    }, AUTO_SYNC_DELAY_MS);
+  }, [dirty, draftId, parseId, editRevision, syncParagraphs]);
 
   async function createDraft() {
     if (!canCreateDraft || !file) {
@@ -245,20 +331,7 @@ export default function App() {
       return;
     }
 
-    setSavingParagraphs(true);
-    setMessage('正在合并字符级结构，并同步段落类型……');
-
-    try {
-      const result = await api.saveParagraphs(draftId, parseId, mergedParagraphs);
-      setCharUnitsState(paragraphsToCharUnits(mergedParagraphs));
-      setDirty(false);
-      clearBrowserSelection();
-      setMessage(`段落类型已同步，后端更新 ${result.updatedCount ?? 0} 个段落。`);
-    } catch (error) {
-      setMessage(`保存失败：${(error as Error).message}`);
-    } finally {
-      setSavingParagraphs(false);
-    }
+    await syncParagraphs({ manual: true });
   }
 
   async function generateDocument() {
