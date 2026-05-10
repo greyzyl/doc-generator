@@ -148,7 +148,7 @@ export default function App() {
 
     setCreatingDraft(true);
     setOutputFiles([]);
-    setMessage('正在创建草稿并上传正文文件……');
+    setMessage('正在上传正文文件……');
 
     try {
       const result = await api.createDraft({
@@ -163,9 +163,9 @@ export default function App() {
       setParseId('');
       setCharUnitsState([]);
       setDirty(false);
-      setMessage(`草稿创建成功：${result.draftId || ''}。下一步可以选择规则解析或 LLM 解析。`);
+      setMessage('文件上传成功。下一步可以选择规则解析或 LLM 解析。');
     } catch (error) {
-      setMessage(`创建草稿失败：${(error as Error).message}`);
+      setMessage(`上传文件失败：${(error as Error).message}`);
     } finally {
       setCreatingDraft(false);
     }
@@ -173,7 +173,7 @@ export default function App() {
 
   async function parseByRule() {
     if (!canParse) {
-      setMessage('请先创建草稿并确保拿到 draftId 和 fileId。');
+      setMessage('请先上传文件，并确保接口已返回 draftId 和 fileId。');
       return;
     }
 
@@ -197,7 +197,7 @@ export default function App() {
 
   async function parseByLLM() {
     if (!canParseWithLLM) {
-      setMessage('请先创建草稿并确保拿到 draftId 和 fileId。');
+      setMessage('请先上传文件，并确保接口已返回 draftId 和 fileId。');
       return;
     }
 
@@ -303,7 +303,7 @@ export default function App() {
         </div>
         <div className="step-row">
           <StepBadge done={templates.length > 0} active={templatesLoading}>1 模板</StepBadge>
-          <StepBadge done={Boolean(draftId)} active={creatingDraft}>2 草稿</StepBadge>
+          <StepBadge done={Boolean(draftId)} active={creatingDraft}>2 上传</StepBadge>
           <StepBadge done={Boolean(parseId)} active={parsing || parsingWithLLM}>3 解析</StepBadge>
           <StepBadge done={mergedParagraphs.length > 0} active={savingParagraphs}>4 编辑</StepBadge>
           <StepBadge done={outputFiles.length > 0} active={generating}>5 生成</StepBadge>

@@ -7,8 +7,7 @@ export function typeBadgeClass(type: ParagraphType): string {
   if (type === 'LEVEL_1_TITLE' || type === 'SUBTITLE_LEVEL_1') return 'type-heading-1';
   if (type === 'LEVEL_2_TITLE' || type === 'SUBTITLE_LEVEL_2') return 'type-heading-2';
   if (type === 'LEVEL_3_TITLE' || type === 'SUBTITLE_LEVEL_3') return 'type-heading-3';
-  if (type === 'MIXED_LEVEL_3_BODY') return 'type-lead';
-  if (type === 'BODY_PARAGRAPH' || type === 'NORMAL_TEXT') return 'type-normal';
+  if (type === 'MIXED_LEVEL_3_BODY' || type === 'BODY_PARAGRAPH' || type === 'NORMAL_TEXT') return 'type-normal';
   if (type === 'ATTACHMENT_HEADER' || type === 'ATTACHMENT_TITLE') return 'type-attachment-title';
   if (type === 'ATTACHMENT_ITEM') return 'type-attachment-item';
   if (type === 'SIGNING_COMPANY' || type === 'SIGNATURE') return 'type-signature';

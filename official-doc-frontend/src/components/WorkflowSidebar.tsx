@@ -103,7 +103,7 @@ export function WorkflowSidebar(props: WorkflowSidebarProps) {
           </label>
 
           <button type="button" onClick={props.onCreateDraft} disabled={!props.canCreateDraft || props.creatingDraft} className="btn primary full">
-            {props.creatingDraft ? '创建中……' : '创建草稿并上传'}
+            {props.creatingDraft ? '上传中……' : '上传文件'}
           </button>
         </div>
       </section>
@@ -154,7 +154,7 @@ export function WorkflowSidebar(props: WorkflowSidebarProps) {
             <div className="id-list">
               <div>
                 <b>draftId：</b>
-                <span>{props.draftId || '未创建'}</span>
+                <span>{props.draftId || '未返回'}</span>
               </div>
               <div>
                 <b>fileId：</b>
