@@ -61,7 +61,6 @@ export default function App() {
   const canCreateDraft = Boolean(selectedTemplateId && selectedTemplate?.available !== false && documentName.trim() && file);
   const canParse = Boolean(draftId && fileId);
   const canParseWithLLM = canParse;
-  const canSave = Boolean(draftId && parseId && dirty);
   const canGenerate = Boolean(draftId && parseId && mergedParagraphs.length > 0);
 
   const latestSyncInputRef = useRef({ draftId: '', parseId: '', charUnits: [] as CharUnit[] });
@@ -70,13 +69,24 @@ export default function App() {
   const syncedRevisionRef = useRef(0);
   const autoSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const syncInFlightRef = useRef(false);
+  const syncPromiseRef = useRef<Promise<boolean> | null>(null);
+
+  const markDirty = useCallback(() => {
+    dirtyRef.current = true;
+    setDirty(true);
+  }, []);
+
+  const markClean = useCallback(() => {
+    dirtyRef.current = false;
+    setDirty(false);
+  }, []);
 
   const setCharUnits = useCallback((updater: (prev: CharUnit[]) => CharUnit[]) => {
     editRevisionRef.current += 1;
     setEditRevision(editRevisionRef.current);
-    setDirty(true);
+    markDirty();
     setCharUnitsState(updater);
-  }, []);
+  }, [markDirty]);
 
   useEffect(() => {
     latestSyncInputRef.current = { draftId, parseId, charUnits };
@@ -161,60 +171,89 @@ export default function App() {
   function useSampleParagraphs() {
     setCharUnitsState(paragraphsToCharUnits(SAMPLE_PARAGRAPHS));
     setParseId((prev) => prev || 'parse_demo_001');
-    setDirty(false);
+    markClean();
     clearBrowserSelection();
     setMessage('已载入示例 paragraphs，并转换为字符级结构。');
   }
 
   const syncParagraphs = useCallback(
-    async (options: { manual?: boolean } = {}) => {
-      if (syncInFlightRef.current) {
-        if (options.manual) setMessage('已有同步正在进行，当前修改会在随后继续同步。');
-        return;
-      }
+    async (mode: 'auto' | 'generate' = 'auto') => {
+      const forGenerate = mode === 'generate';
 
-      const revision = editRevisionRef.current;
-      const { draftId: latestDraftId, parseId: latestParseId, charUnits: latestCharUnits } = latestSyncInputRef.current;
-      if (!dirtyRef.current && !options.manual) return;
-      if (!latestDraftId || !latestParseId || revision <= syncedRevisionRef.current) {
-        if (options.manual) setMessage('当前没有需要同步的修改，或缺少 draftId / parseId。');
-        return;
-      }
+      while (true) {
+        if (syncInFlightRef.current) {
+          if (!forGenerate) return true;
 
-      syncInFlightRef.current = true;
-      setSavingParagraphs(true);
-      setMessage(options.manual ? '正在同步段落类型……' : '正在自动同步段落类型……');
-      let didFail = false;
-
-      try {
-        const paragraphs = charUnitsToParagraphs(latestCharUnits);
-        const result = await api.saveParagraphs(latestDraftId, latestParseId, paragraphs);
-
-        if (editRevisionRef.current === revision) {
-          syncedRevisionRef.current = revision;
-          setDirty(false);
-          setMessage(`段落类型已${options.manual ? '' : '自动'}同步，后端更新 ${result.updatedCount ?? 0} 个段落。`);
-        } else {
-          syncedRevisionRef.current = Math.max(syncedRevisionRef.current, revision);
+          setMessage('正在等待段落类型同步完成……');
+          const runningSync = syncPromiseRef.current;
+          if (!runningSync) return false;
+          if (!(await runningSync)) return false;
+          continue;
         }
-      } catch (error) {
-        didFail = true;
-        setDirty(true);
-        setMessage(`同步失败：${(error as Error).message}。可继续编辑，或点击“同步类型”重试。`);
-      } finally {
-        syncInFlightRef.current = false;
-        setSavingParagraphs(false);
 
-        const hasUnsyncedEdit = dirtyRef.current && editRevisionRef.current > syncedRevisionRef.current;
-        if (!didFail && hasUnsyncedEdit) {
+        const revision = editRevisionRef.current;
+        const { draftId: latestDraftId, parseId: latestParseId, charUnits: latestCharUnits } = latestSyncInputRef.current;
+        const hasUnsyncedEdit = dirtyRef.current && revision > syncedRevisionRef.current;
+        if (!hasUnsyncedEdit) return true;
+
+        if (!latestDraftId || !latestParseId) {
+          if (forGenerate) setMessage('请先完成解析，确保有 draftId 和 parseId。');
+          return false;
+        }
+
+        syncInFlightRef.current = true;
+        setSavingParagraphs(true);
+        setMessage(forGenerate ? '正在同步最新段落类型，随后生成公文……' : '正在自动同步段落类型……');
+
+        const syncPromise = (async () => {
+          try {
+            const paragraphs = charUnitsToParagraphs(latestCharUnits);
+            const result = await api.saveParagraphs(latestDraftId, latestParseId, paragraphs);
+
+            if (editRevisionRef.current === revision) {
+              syncedRevisionRef.current = revision;
+              markClean();
+            } else {
+              syncedRevisionRef.current = Math.max(syncedRevisionRef.current, revision);
+            }
+
+            if (!forGenerate) {
+              setMessage(`段落类型已自动同步，后端更新 ${result.updatedCount ?? 0} 个段落。`);
+            }
+
+            return true;
+          } catch (error) {
+            markDirty();
+            setMessage(`同步失败：${(error as Error).message}。可继续编辑，或点击“生成公文”重试。`);
+            return false;
+          } finally {
+            syncInFlightRef.current = false;
+            syncPromiseRef.current = null;
+            setSavingParagraphs(false);
+          }
+        })();
+
+        syncPromiseRef.current = syncPromise;
+        const synced = await syncPromise;
+        if (!synced) return false;
+
+        const hasMoreUnsyncedEdit = dirtyRef.current && editRevisionRef.current > syncedRevisionRef.current;
+        if (forGenerate) {
+          if (hasMoreUnsyncedEdit) continue;
+          return true;
+        }
+
+        if (hasMoreUnsyncedEdit) {
           if (autoSyncTimerRef.current) clearTimeout(autoSyncTimerRef.current);
           autoSyncTimerRef.current = setTimeout(() => {
             void syncParagraphs();
           }, AUTO_SYNC_DELAY_MS);
         }
+
+        return true;
       }
     },
-    [api],
+    [api, markClean, markDirty],
   );
 
   useEffect(() => {
@@ -248,7 +287,7 @@ export default function App() {
       setFileId(result.bodyFile?.fileId || '');
       setParseId('');
       setCharUnitsState([]);
-      setDirty(false);
+      markClean();
       setMessage('文件上传成功。下一步可以选择规则解析或大模型解析。');
     } catch (error) {
       setMessage(`上传文件失败：${(error as Error).message}`);
@@ -271,7 +310,7 @@ export default function App() {
       const nextParagraphs = result.paragraphs || [];
       setParseId(result.parseId || '');
       setCharUnitsState(paragraphsToCharUnits(nextParagraphs));
-      setDirty(false);
+      markClean();
       clearBrowserSelection();
       setMessage(`规则解析成功，获得 ${nextParagraphs.length} 个段落。`);
     } catch (error) {
@@ -300,7 +339,7 @@ export default function App() {
           streamedParagraphs = [];
           setParseId(data.parseId || '');
           setCharUnitsState([]);
-          setDirty(false);
+          markClean();
           clearBrowserSelection();
           setMessage('大模型正在返回段落……');
         },
@@ -315,7 +354,7 @@ export default function App() {
       const nextParagraphs = result.paragraphs || streamedParagraphs;
       setParseId(result.parseId || '');
       setCharUnitsState(paragraphsToCharUnits(nextParagraphs));
-      setDirty(false);
+      markClean();
       clearBrowserSelection();
       setMessage(`大模型解析完成，返回 ${nextParagraphs.length} 个段落。`);
     } catch (error) {
@@ -325,37 +364,38 @@ export default function App() {
     }
   }
 
-  async function saveParagraphs() {
-    if (!canSave) {
-      setMessage('当前没有需要保存的修改，或缺少 draftId / parseId。');
-      return;
-    }
-
-    await syncParagraphs({ manual: true });
-  }
-
   async function generateDocument() {
     if (!canGenerate) {
       setMessage('请先完成解析，确保有 draftId、parseId 和最终 paragraphs。');
       return;
     }
 
+    if (autoSyncTimerRef.current) {
+      clearTimeout(autoSyncTimerRef.current);
+      autoSyncTimerRef.current = null;
+    }
+
     setGenerating(true);
     setOutputFiles([]);
-    setMessage('正在生成标准格式公文……');
 
     try {
+      const synced = await syncParagraphs('generate');
+      if (!synced) return;
+
+      const latest = latestSyncInputRef.current;
+      const latestParagraphs = charUnitsToParagraphs(latest.charUnits);
+      setMessage('正在生成标准格式公文……');
       const result = await api.generateDocument(
         {
           templateId: selectedTemplateId,
           templateType: selectedTemplateType,
           documentName,
-          parseId,
+          parseId: latest.parseId,
           metadata,
-          paragraphs: mergedParagraphs,
+          paragraphs: latestParagraphs,
           outputFormat: 'DOCX',
         },
-        draftId,
+        latest.draftId,
       );
       const files = result.outputFiles || [];
       setOutputFiles(files);
@@ -372,7 +412,7 @@ export default function App() {
       <header className="app-header">
         <div>
           <h1>标准格式公文生成前端</h1>
-          <p>模板选择 → 上传正文 → 规则/大模型解析 → 字符级标注 → 同步类型 → 生成下载。</p>
+          <p>模板选择 → 上传正文 → 规则/大模型解析 → 字符级标注 → 生成下载。</p>
         </div>
         <div className="step-row">
           <StepBadge done={templates.length > 0} active={templatesLoading}>1 模板</StepBadge>
@@ -407,7 +447,6 @@ export default function App() {
           canCreateDraft={canCreateDraft}
           canParse={canParse}
           canParseWithLLM={canParseWithLLM}
-          canSave={canSave}
           canGenerate={canGenerate}
           creatingDraft={creatingDraft}
           parsing={parsing}
@@ -417,7 +456,6 @@ export default function App() {
           onCreateDraft={createDraft}
           onParseByRule={parseByRule}
           onParseByLLM={parseByLLM}
-          onSaveParagraphs={saveParagraphs}
           onGenerate={generateDocument}
           onUseSample={useSampleParagraphs}
           outputFiles={outputFiles}
@@ -430,7 +468,6 @@ export default function App() {
           paragraphTypes={paragraphTypes}
           getTypeLabel={getTypeLabel}
           dirty={dirty}
-          setDirty={setDirty}
           message={message}
           setMessage={setMessage}
           isParsing={parsing || parsingWithLLM}

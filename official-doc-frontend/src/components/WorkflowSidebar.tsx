@@ -28,7 +28,6 @@ interface WorkflowSidebarProps {
   canCreateDraft: boolean;
   canParse: boolean;
   canParseWithLLM: boolean;
-  canSave: boolean;
   canGenerate: boolean;
   creatingDraft: boolean;
   parsing: boolean;
@@ -38,7 +37,6 @@ interface WorkflowSidebarProps {
   onCreateDraft: () => void;
   onParseByRule: () => void;
   onParseByLLM: () => void;
-  onSaveParagraphs: () => void;
   onGenerate: () => void;
   onUseSample: () => void;
   outputFiles: OutputFile[];
@@ -146,11 +144,8 @@ export function WorkflowSidebar(props: WorkflowSidebarProps) {
               {isParsing ? '解析中' : '解析'}
             </button>
           </div>
-          <button type="button" onClick={props.onSaveParagraphs} disabled={!props.canSave || props.savingParagraphs} className="btn green">
-            {props.savingParagraphs ? '同步中' : '同步类型'}
-          </button>
           <button type="button" onClick={props.onGenerate} disabled={!props.canGenerate || props.generating} className="btn rose">
-            {props.generating ? '生成中' : '生成公文'}
+            {props.generating ? (props.savingParagraphs ? '同步后生成' : '生成中') : '生成公文'}
           </button>
         </div>
       </section>

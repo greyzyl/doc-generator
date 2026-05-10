@@ -15,7 +15,6 @@ interface CharacterEditorProps {
   paragraphTypes: ParagraphTypeOption[];
   getTypeLabel: (type: string) => string;
   dirty: boolean;
-  setDirty: (dirty: boolean) => void;
   message: string;
   setMessage: (message: string) => void;
   isParsing: boolean;
@@ -35,7 +34,6 @@ export function CharacterEditor({
   paragraphTypes,
   getTypeLabel,
   dirty,
-  setDirty,
   message,
   setMessage,
   isParsing,
@@ -100,7 +98,6 @@ export function CharacterEditor({
     }
 
     setCharUnits((prev) => updateCharUnitsType(prev, start, end, nextType));
-    setDirty(true);
     const inlineHint = nextType === 'LEVEL_3_TITLE' ? '；若选择范围位于正文段内，已按段内三级标题 segment 处理' : '';
     setMessage(`已将字符范围 ${start} 至 ${end} 设置为「${getTypeLabel(nextType)}」${inlineHint}：${buildRangePreview(contextMenu.text)}`);
     setContextMenu(null);
@@ -117,7 +114,7 @@ export function CharacterEditor({
         <div className="badge-row">
           {isParsing && <span className="pill active">解析中</span>}
           <span className="pill muted">{visibleCharCount} 字符</span>
-          {dirty && <span className="pill warning">未保存</span>}
+          {dirty && <span className="pill warning">待同步</span>}
         </div>
       </div>
 
