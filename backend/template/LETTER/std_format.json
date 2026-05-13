@@ -1,0 +1,168 @@
+{
+  "templateType": "upward_document",
+  "bodyAnchor": "{{BODY_BLOCKS}}",
+  "placeholderMap": {
+    "issuingUnit": "{{ISSUING_UNIT}}",
+    "docNumber": "{{DOC_NUMBER}}",
+    "signer": "{{SIGNER}}",
+    "copyTo": "{{COPY_TO}}",
+    "printingUnit": "{{PRINTING_UNIT}}",
+    "printingDate": "{{PRINTING_DATE}}"
+  },
+  "blockStyleMap": {
+    "MIXED_LEVEL_3_BODY": {
+      "paragraphStyle": "BODY_PARAGRAPH",
+      "runStyle": "BODY_TEXT"
+    }
+  },
+  "paragraphStyles": {
+    "MAIN_TITLE": {
+      "alignment": "center",
+      "firstLineIndentChars": 0,
+      "lineSpacingRule": "auto",
+      "lineSpacing": 230,
+      "spaceBefore": 0.0
+    },
+    "SUB_TITLE": {
+      "alignment": "center",
+      "firstLineIndentChars": 0,
+      "lineSpacingRule": "exact",
+      "lineSpacing": 28
+    },
+    "RECIPIENT": {
+      "leftIndent": 171,
+      "spaceBefore": 21.2
+    },
+    "BODY_PARAGRAPH": {
+      "alignment": "both",
+      "firstLineIndentChars": 2,
+      "leftIndent": 0,
+      "rightIndent": 0,
+      "lineSpacingRule": "exact",
+      "lineSpacing": 28,
+      "spaceBefore": 0,
+      "spaceAfter": 0,
+      "adjustRightIndent": true,
+      "snapToGrid": true
+    },
+    "LEVEL_1_TITLE": {
+      "leftIndent": 170,
+      "lineSpacingRule": "exact",
+      "lineSpacing": 20.55,
+      "rightIndent": 289,
+      "firstLineIndentChars": 2
+    },
+    "LEVEL_2_TITLE": {
+      "leftIndent": 170,
+      "spaceBefore": 0,
+      "rightIndent": 289,
+      "firstLineIndentChars": 2
+    },
+    "LEVEL_3_TITLE": {
+      "alignment": "both",
+      "firstLineIndentChars": 2,
+      "leftIndent": 170,
+      "rightIndent": 289,
+      "lineSpacingRule": "exact",
+      "lineSpacing": 28
+    },
+    "SIGNING_COMPANY": {
+      "alignment": "right",
+      "leftIndent": 0,
+      "rightIndent": 0,
+      "firstLineIndentChars": 0,
+      "spaceBefore": 7.15
+    },
+    "SIGNING_DATE": {
+      "alignment": "right",
+      "leftIndent": 0,
+      "rightIndent": 0,
+      "firstLineIndentChars": 0,
+      "spaceBefore": 7.15
+    },
+    "ATTACHMENT_HEADER": {
+      "alignment": "both",
+      "firstLineIndentChars": 2,
+      "leftIndent": 0,
+      "rightIndent": 0,
+      "lineSpacingRule": "exact",
+      "lineSpacing": 28,
+      "spaceBefore": 0,
+      "spaceAfter": 0,
+      "adjustRightIndent": true,
+      "snapToGrid": true
+    },
+    "ATTACHMENT_ITEM": {
+      "alignment": "both",
+      "firstLineIndentChars": 5,
+      "leftIndent": 0,
+      "rightIndent": 0,
+      "lineSpacingRule": "exact",
+      "lineSpacing": 28,
+      "spaceBefore": 0,
+      "spaceAfter": 0,
+      "adjustRightIndent": true,
+      "snapToGrid": true
+    },
+    "CONTACT_INFO": {
+      "leftIndent": 795,
+      "spaceBefore": 0.3
+    }
+  },
+  "runStyles": {
+    "MAIN_TITLE_TEXT": {
+      "eastAsiaFont": "方正小标宋简体",
+      "asciiFont": "方正小标宋简体",
+      "hAnsiFont": "方正小标宋简体",
+      "csFont": "方正小标宋简体",
+      "fontSizePt": 22.0
+    },
+    "BODY_TEXT": {
+      "eastAsiaFont": "仿宋_GB2312",
+      "asciiFont": "仿宋_GB2312",
+      "hAnsiFont": "仿宋_GB2312",
+      "fontSizePt": 16.0
+    },
+    "SUB_TITLE_TEXT": {
+      "eastAsiaFont": "楷体",
+      "asciiFont": "楷体",
+      "hAnsiFont": "楷体",
+      "fontSizePt": 16.0
+    },
+    "LEVEL_1_TITLE_TEXT": {
+      "eastAsiaFont": "黑体",
+      "asciiFont": "黑体",
+      "hAnsiFont": "黑体",
+      "csFont": "黑体",
+      "fontSizePt": 16.0
+    },
+    "LEVEL_2_TITLE_TEXT": {
+      "eastAsiaFont": "楷体",
+      "asciiFont": "楷体",
+      "hAnsiFont": "楷体",
+      "csFont": "楷体",
+      "fontSizePt": 16.0
+    },
+    "LEVEL_3_TITLE_TEXT": {
+      "eastAsiaFont": "仿宋_GB2312",
+      "asciiFont": "仿宋_GB2312",
+      "hAnsiFont": "仿宋_GB2312",
+      "fontSizePt": 16,
+      "bold": true
+    },
+    "LEVEL_3_TITLE_INLINE": {
+      "eastAsiaFont": "仿宋_GB2312",
+      "asciiFont": "仿宋_GB2312",
+      "hAnsiFont": "仿宋_GB2312",
+      "fontSizePt": 16,
+      "bold": true
+    },
+    "PLAIN_TEXT": {
+      "eastAsiaFont": "仿宋_GB2312",
+      "asciiFont": "Times New Roman",
+      "hAnsiFont": "Times New Roman",
+      "fontSizePt": 16,
+      "bold": false
+    }
+  }
+}

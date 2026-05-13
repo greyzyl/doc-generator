@@ -1,0 +1,4 @@
+.env
+.api_storage/
+__pycache__/
+output/

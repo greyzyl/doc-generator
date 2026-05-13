@@ -1,0 +1,24 @@
+{
+  "name": "official-doc-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --configLoader native",
+    "dev:official": "VITE_DEV_PORT=62233 VITE_PROXY_TARGET=http://127.0.0.1:8009 vite --configLoader native",
+    "dev:test": "VITE_DEV_PORT=63230 VITE_PROXY_TARGET=http://127.0.0.1:8010 vite --configLoader native",
+    "build": "tsc -b && vite build --configLoader native",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "latest",
+    "typescript": "latest",
+    "vite": "latest"
+  }
+}
